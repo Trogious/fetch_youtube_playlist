@@ -12,7 +12,7 @@ PLAYLIST_ID = os.getenv('FETCH_PLAYLIST')
 DB_FILE = os.getenv('FETCH_DB_FILE')
 OUTDIR = os.getenv('FETCH_OUTDIR', './')
 FETCH_LOGGER_NAME = 'fetch_logger'
-CMD = ['youtube-dl', '--restrict-filenames', '-f', 'best', '-o', OUTDIR + '%(title)s.%(ext)s']
+CMD = ['/home/yup/yt-dlp-2023.02.17/yt-dlp.sh', '--restrict-filenames', '-f', 'bestvideo[width<=?1920]+bestaudio', '-o', OUTDIR + '%(title)s.%(ext)s']
 
 
 class Logger:
@@ -57,6 +57,8 @@ class Fetch:
                     self.con.rollback()
         except sqlite3.IntegrityError as e:
             self.logger.info('already fetched: ' + video_id)
+        except sqlite3.OperationalError as e:
+            raise e
         except Exception as e:
             self.logger.error(e, exc_info=e)
 
