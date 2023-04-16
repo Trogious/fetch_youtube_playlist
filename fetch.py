@@ -8,11 +8,12 @@ import googleapiclient.discovery
 import googleapiclient.errors
 
 API_KEY = os.getenv('FETCH_API_KEY')
-PLAYLIST_ID = os.getenv('FETCH_PLAYLIST')
+PLAYLIST_IDS = os.getenv('FETCH_PLAYLISTS').split(',')
 DB_FILE = os.getenv('FETCH_DB_FILE')
-OUTDIR = os.getenv('FETCH_OUTDIR', './')
+OUTDIRS = os.getenv('FETCH_OUTDIRS', './').split(':')
+QUALITIES = os.getenv('FETCH_QUALITIES', 'bestvideo[width<=?1920]+bestaudio').split(',')
 FETCH_LOGGER_NAME = 'fetch_logger'
-CMD = ['/home/yup/yt-dlp-2023.02.17/yt-dlp.sh', '--restrict-filenames', '-f', 'bestvideo[width<=?1920]+bestaudio', '-o', OUTDIR + '%(title)s.%(ext)s']
+BINARY = '/home/yup/yt-dlp-2023.02.17/yt-dlp.sh'
 
 
 class Logger:
@@ -41,9 +42,9 @@ class Fetch:
         cur = self.con.cursor()
         cur.execute('INSERT INTO fetched (video_id) VALUES(?)', (video_id, ))
 
-    def fetch_video(self, video_id):
-        url = 'https://www.youtube.com/watch?v=' + video_id
-        cmd = CMD + [url]
+    def fetch_video(self, video_id, index):
+        cmd = [BINARY, '--restrict-filenames', '-f', QUALITIES[index],
+               '-o', OUTDIRS[index] + '%(title)s.%(ext)s', video_id]
         pcmd = cmd[:]
         pcmd[-2] = "'" + pcmd[-2] + "'"
         pcmd[-1] = "'" + pcmd[-1] + "'"
@@ -62,27 +63,28 @@ class Fetch:
         except Exception as e:
             self.logger.error(e, exc_info=e)
 
-    def process_item(self, item):
+    def process_item(self, item, index):
         # print('%s: %s' % (item['snippet']['resourceId']['videoId'], item['snippet']['title']))
-        self.fetch_video(item['snippet']['resourceId']['videoId'])
+        self.fetch_video(item['snippet']['resourceId']['videoId'], index)
 
     def main(self):
-        youtube = googleapiclient.discovery.build('youtube', 'v3', developerKey=API_KEY)
-        request = youtube.playlistItems().list(
-            part='snippet',
-            playlistId=PLAYLIST_ID,
-            maxResults=50
-        )
-        response = request.execute()
-
-        self.con = sqlite3.connect(DB_FILE)
-        while request is not None:
+        for i in range(len(PLAYLIST_IDS)):
+            youtube = googleapiclient.discovery.build('youtube', 'v3', developerKey=API_KEY)
+            request = youtube.playlistItems().list(
+                part='snippet',
+                playlistId=PLAYLIST_IDS[i],
+                maxResults=50
+            )
             response = request.execute()
-            for item in response['items']:
-                self.process_item(item)
-            break
-            # request = youtube.playlistItems().list_next(request, response)
-        self.con.close()
+
+            self.con = sqlite3.connect(DB_FILE)
+            while request is not None:
+                response = request.execute()
+                for item in response['items']:
+                    self.process_item(item, i)
+                break
+                request = youtube.playlistItems().list_next(request, response)
+            self.con.close()
 
 
 if __name__ == '__main__':
