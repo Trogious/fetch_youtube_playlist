@@ -50,7 +50,11 @@ class DeleteItems:
         #print(json.dumps(item, indent=2))
 
     def main(self):
-        youtube =  Create_Service(CLIENT_SECRET_FILE, os.path.dirname(CLIENT_SECRET_FILE), API_NAME, API_VERSION, SCOPES)
+        try:
+            youtube =  Create_Service(CLIENT_SECRET_FILE, os.path.dirname(CLIENT_SECRET_FILE), API_NAME, API_VERSION, SCOPES)
+        except Exception as e:
+            self.logger.error(e)
+            return
         to_delete = []
         for i in range(len(PLAYLIST_IDS)):
             request = youtube.playlistItems().list(
