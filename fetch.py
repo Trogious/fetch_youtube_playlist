@@ -43,12 +43,13 @@ class Fetch:
         cur.execute('INSERT INTO fetched (video_id) VALUES(?)', (video_id, ))
 
     def fetch_video(self, video_id, index):
-        cmd = [BINARY, '--restrict-filenames', '-f', QUALITIES[index],
-               '-o', OUTDIRS[index] + '%(title)s.%(ext)s', video_id]
-        pcmd = cmd[:]
-        pcmd[-2] = "'" + pcmd[-2] + "'"
-        pcmd[-1] = "'" + pcmd[-1] + "'"
-        self.logger.info(' '.join(pcmd))
+        if index == 1:
+            cmd = [BINARY, '--restrict-filenames', '--embed-thumbnail', '-f', QUALITIES[index],
+               '-o', OUTDIRS[index] + '%(title)s.%(ext)s', '--', video_id]
+        else:
+            cmd = [BINARY, '--restrict-filenames', '-f', QUALITIES[index],
+               '-o', OUTDIRS[index] + '%(title)s.%(ext)s', '--', video_id]
+        self.logger.info(' '.join(cmd))
         try:
             with self.con:
                 self.store_id(video_id)
