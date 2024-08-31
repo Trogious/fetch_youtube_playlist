@@ -44,13 +44,13 @@ class DeleteItems:
         date_now = datetime.datetime.today()
         delta = date_now-added_date_time
         if delta.days > 30:
-            print('%d %s: %s' % (delta.days, item['snippet']['resourceId']['videoId'], item['snippet']['title']))
+            self.logger.info('%d %s: %s' % (delta.days, item['snippet']['resourceId']['videoId'], item['snippet']['title']))
             return True
         return False
         #print(json.dumps(item, indent=2))
 
     def main(self):
-        youtube =  Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
+        youtube =  Create_Service(CLIENT_SECRET_FILE, os.path.dirname(CLIENT_SECRET_FILE), API_NAME, API_VERSION, SCOPES)
         to_delete = []
         for i in range(len(PLAYLIST_IDS)):
             request = youtube.playlistItems().list(
