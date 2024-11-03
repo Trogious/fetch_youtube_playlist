@@ -44,7 +44,7 @@ class Fetch:
 
     def fetch_video(self, video_id, index):
         if index == 1:
-            cmd = [BINARY, '--restrict-filenames', '--embed-thumbnail', '-f', QUALITIES[index],
+            cmd = [BINARY, '--restrict-filenames', '--extract-audio', '--audio-format', 'm4a', '--audio-quality', 'best', '--embed-thumbnail', '-f', QUALITIES[index],
                '-o', OUTDIRS[index] + '%(title)s.%(ext)s', '--', video_id]
         else:
             cmd = [BINARY, '--restrict-filenames', '-f', QUALITIES[index],
