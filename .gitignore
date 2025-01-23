@@ -2,3 +2,4 @@ fetch.log
 fetched.db
 client_secrets.json
 token_youtube_v3.pickle
+config.json

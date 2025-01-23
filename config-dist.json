@@ -1,0 +1,33 @@
+{
+    "api_key": "",
+    "binary": "",
+    "db_file": "",
+    "playlists": [
+        {
+            "name": "tablet",
+            "id": "",
+            "output_dir": "",
+            "args": [
+                "--restrict-filenames",
+                "-f",
+                "bestvideo[width<=?1920]+bestaudio"
+            ]
+        },
+        {
+            "name": "music",
+            "id": "",
+            "output_dir": "",
+            "args": [
+                "--restrict-filenames",
+                "--extract-audio",
+                "--audio-format",
+                "m4a",
+                "--audio-quality",
+                "best",
+                "--embed-thumbnail",
+                "-f",
+                "bestaudio"
+            ]
+        }
+    ]
+}
