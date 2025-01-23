@@ -60,7 +60,7 @@ class Fetch:
 
     def main(self):
         for playlist in self.config["playlists"]:
-            youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=self.api_key)
+            youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=self.config["api_key"])
             request = youtube.playlistItems().list(part="snippet", playlistId=playlist["id"], maxResults=50)
             response = request.execute()
 
