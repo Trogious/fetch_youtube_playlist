@@ -8,8 +8,11 @@ from logging.handlers import RotatingFileHandler
 
 import googleapiclient.discovery
 import googleapiclient.errors
+from notify import Notify
 
 CONFIG_PATH = os.getenv("FETCH_CONFIG_PATH")
+FB_PAGE_ACCESS_TOKEN = os.getenv("FETCH_FB_PAGE_ACCESS_TOKEN")
+FB_RECIPIENT_ID = os.getenv("FETCH_FB_RECIPIENT_ID")
 
 
 class Logger:
@@ -33,6 +36,7 @@ class Fetch:
         self.logger = Logger.get_logger()
         with open(CONFIG_PATH, "r") as cfg:
             self.config = json.load(cfg)
+        self.notify = Notify(self.logger, FB_PAGE_ACCESS_TOKEN, FB_RECIPIENT_ID)
 
     def store_id(self, video_id):
         cur = self.con.cursor()
@@ -41,11 +45,14 @@ class Fetch:
     def fetch_video(self, video_id, out_dir, args):
         cmd = [self.config["binary"]] + args + ["-o", out_dir + "%(title)s.%(ext)s", "--", video_id]
         self.logger.info(" ".join(cmd))
+        fetched = False
         try:
             with self.con:
                 self.store_id(video_id)
                 ret = subprocess.run(cmd, check=True)
-                if ret.returncode != 0:
+                if ret.returncode == 0:
+                    fetched = True
+                else:
                     self.logger.error("subprocess return code: %d" % ret.returncode)
                     self.con.rollback()
         except sqlite3.IntegrityError:
@@ -54,9 +61,12 @@ class Fetch:
             raise e
         except Exception as e:
             self.logger.error(e, exc_info=e)
+        return fetched
 
     def process_item(self, item, playlist):
-        self.fetch_video(item["snippet"]["resourceId"]["videoId"], playlist["output_dir"], playlist["args"])
+        if self.fetch_video(item["snippet"]["resourceId"]["videoId"], playlist["output_dir"], playlist["args"]):
+            if "notify" in playlist and playlist["notify"]:
+                self.notify.fb_send(item["snippet"]["title"])
 
     def main(self):
         for playlist in self.config["playlists"]:
