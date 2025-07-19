@@ -49,26 +49,31 @@ class Fetch:
         self.logger.info(" ".join(cmd))
         fetched = False
         try:
-            with self.con:
-                self.store_id(video_id)
-                ret = subprocess.run(cmd, check=True)
-                if ret.returncode == 0:
-                    fetched = True
-                else:
-                    self.logger.error("subprocess return code: %d" % ret.returncode)
-                    self.con.rollback()
-        except sqlite3.IntegrityError:
-            self.logger.info("already fetched: " + video_id)
-        except sqlite3.OperationalError as e:
-            raise e
+            ret = subprocess.run(cmd, check=True)
+            if ret.returncode == 0:
+                fetched = True
+            else:
+                self.logger.error("subprocess return code: %d" % ret.returncode)
         except Exception as e:
             self.logger.error(e, exc_info=e)
         return fetched
 
     def process_item(self, item, playlist, i=0):
-        if self.fetch_video(item["snippet"]["resourceId"]["videoId"], playlist["output_dir"], playlist["args"], i):
-            if "notify" in playlist and playlist["notify"]:
-                self.notify.fb_send(item["snippet"]["title"])
+        refetch = "refetch" in playlist and playlist["refetch"]
+        video_id = item["snippet"]["resourceId"]["videoId"]
+        try:
+            with self.con:
+                if not refetch:
+                    self.store_id(video_id)
+                if self.fetch_video(video_id, playlist["output_dir"], playlist["args"], i):
+                    if "notify" in playlist and playlist["notify"]:
+                        self.notify.fb_send(item["snippet"]["title"])
+                else:
+                    self.con.rollback()
+        except sqlite3.IntegrityError:
+            self.logger.info("already fetched: " + video_id)
+        except sqlite3.OperationalError as e:
+            raise e
 
     def main(self):
         for playlist in self.config["playlists"]:
