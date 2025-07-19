@@ -13,6 +13,7 @@ from notify import Notify
 CONFIG_PATH = os.getenv("FETCH_CONFIG_PATH")
 FB_PAGE_ACCESS_TOKEN = os.getenv("FETCH_FB_PAGE_ACCESS_TOKEN")
 FB_RECIPIENT_ID = os.getenv("FETCH_FB_RECIPIENT_ID")
+COOKIES_PATH = os.path.join(CONFIG_PATH[:CONFIG_PATH.rfind("/")], "cookies.txt")
 
 
 class Logger:
@@ -42,8 +43,9 @@ class Fetch:
         cur = self.con.cursor()
         cur.execute("INSERT INTO fetched (video_id) VALUES(?)", (video_id,))
 
-    def fetch_video(self, video_id, out_dir, args):
-        cmd = [self.config["binary"]] + args + ["-o", out_dir + "%(title)s.%(ext)s", "--", video_id]
+    def fetch_video(self, video_id, out_dir, args, i):
+        order_i = "%03d_" % i if i > 0 else ""
+        cmd = [self.config["binary"]] + args + ["--cookies", COOKIES_PATH, "-o", out_dir + order_i + "%(title)s.%(ext)s", "--", video_id]
         self.logger.info(" ".join(cmd))
         fetched = False
         try:
@@ -63,8 +65,8 @@ class Fetch:
             self.logger.error(e, exc_info=e)
         return fetched
 
-    def process_item(self, item, playlist):
-        if self.fetch_video(item["snippet"]["resourceId"]["videoId"], playlist["output_dir"], playlist["args"]):
+    def process_item(self, item, playlist, i=0):
+        if self.fetch_video(item["snippet"]["resourceId"]["videoId"], playlist["output_dir"], playlist["args"], i):
             if "notify" in playlist and playlist["notify"]:
                 self.notify.fb_send(item["snippet"]["title"])
 
@@ -75,11 +77,17 @@ class Fetch:
             response = request.execute()
 
             self.con = sqlite3.connect(self.config["db_file"])
+            i = 1
             while request is not None:
                 response = request.execute()
                 for item in response["items"]:
-                    self.process_item(item, playlist)
-                break
+                    if "enumerate" in playlist and playlist["enumerate"]:
+                        self.process_item(item, playlist, i)
+                    else:
+                        self.process_item(item, playlist)
+                    i += 1
+                if "entire_playlist" not in playlist or not playlist["entire_playlist"]:
+                    break
                 request = youtube.playlistItems().list_next(request, response)
             self.con.close()
 

@@ -7,6 +7,8 @@
             "name": "tablet",
             "id": "",
             "output_dir": "",
+            "enumerate": false,
+            "entire_playlist": false,
             "args": [
                 "--restrict-filenames",
                 "-f",
@@ -17,6 +19,8 @@
             "name": "music",
             "id": "",
             "output_dir": "",
+            "enumerate": false,
+            "entire_playlist": false,
             "args": [
                 "--restrict-filenames",
                 "--extract-audio",
