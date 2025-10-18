@@ -61,13 +61,20 @@ class Fetch:
     def process_item(self, item, playlist, i=0):
         refetch = "refetch" in playlist and playlist["refetch"]
         video_id = item["snippet"]["resourceId"]["videoId"]
+        video_title = item["snippet"]["title"]
+
+        if "title_match" in playlist and playlist["title_match"]:
+            title_match = playlist["title_match"].lower()
+            if title_match not in video_title.lower():
+                return
+
         try:
             with self.con:
                 if not refetch:
                     self.store_id(video_id)
                 if self.fetch_video(video_id, playlist["output_dir"], playlist["args"], i):
                     if "notify" in playlist and playlist["notify"]:
-                        self.notify.fb_send(item["snippet"]["title"])
+                        self.notify.fb_send(video_title)
                 else:
                     self.con.rollback()
         except sqlite3.IntegrityError:
