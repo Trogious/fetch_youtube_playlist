@@ -43,6 +43,11 @@ class Fetch:
         cur = self.con.cursor()
         cur.execute("INSERT INTO fetched (video_id) VALUES(?)", (video_id,))
 
+    def is_blacklisted(self, video_id):
+        cur = self.con.cursor()
+        cur.execute("SELECT 1 FROM blacklist WHERE video_id = ?", (video_id,))
+        return cur.fetchone() is not None
+
     def fetch_video(self, video_id, out_dir, args, i):
         order_i = "%03d_" % i if i > 0 else ""
         cmd = [self.config["binary"]] + args + ["--cookies", COOKIES_PATH, "-o", out_dir + order_i + "%(title)s.%(ext)s", "--", video_id]
@@ -62,6 +67,10 @@ class Fetch:
         refetch = "refetch" in playlist and playlist["refetch"]
         video_id = item["snippet"]["resourceId"]["videoId"]
         video_title = item["snippet"]["title"]
+
+        if self.is_blacklisted(video_id):
+            self.logger.info("skipping blacklisted video: " + video_id)
+            return
 
         if "title_match" in playlist and playlist["title_match"]:
             title_match = playlist["title_match"].lower()
