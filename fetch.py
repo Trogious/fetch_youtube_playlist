@@ -133,13 +133,12 @@ class Fetch:
 
     def remove_orphan_sha1_files(self, dir_path):
         for filename in os.listdir(dir_path):
-            self.logger.info(f"Checking for orphan SHA1 file: {filename}")
-            if filename.endswith('.sha1'):
-                original = filename[:-5]  # remove ".sha1"
-                self.logger.info(f"Checking for original file: {original}")
+            file_path = os.path.join(dir_path, filename)
+            if file_path.endswith('.sha1'):
+                original = file_path[:-5]  # remove ".sha1"
                 if not os.path.isfile(original):
-                    self.logger.info(f"Deleting orphan SHA1 file: {filename}")
-                    os.remove(filename)
+                    self.logger.info(f"Deleting orphan SHA1 file: {file_path}")
+                    os.remove(file_path)
 
 
 if __name__ == "__main__":
