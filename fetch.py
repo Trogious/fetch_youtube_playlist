@@ -83,7 +83,9 @@ class Fetch:
             raise e
 
     def main(self):
+        playlist_output_dirs = set()
         for playlist in self.config["playlists"]:
+            playlist_output_dirs.add(playlist["output_dir"])
             youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=self.config["api_key"])
             request = youtube.playlistItems().list(part="snippet", playlistId=playlist["id"], maxResults=50)
             response = request.execute()
@@ -102,6 +104,8 @@ class Fetch:
                     break
                 request = youtube.playlistItems().list_next(request, response)
             self.con.close()
+        for output_dir in playlist_output_dirs:
+            self.remove_orphan_sha1_files(output_dir)
 
     def write_cksum(self, file_path):
         cksum = None
@@ -126,6 +130,14 @@ class Fetch:
         else:
             self.logger.warning("cannot get sha1 for: %s" % file_path)
         return cksum
+
+    def remove_orphan_sha1_files(self, dir_path):
+        for filename in os.listdir(dir_path):
+            if filename.endswith('.sha1'):
+                original = filename[:-5]  # remove ".sha1"
+                if not os.path.isfile(original):
+                    self.logger.info(f"Deleting orphan SHA1 file: {filename}")
+                    os.remove(filename)
 
 
 if __name__ == "__main__":
