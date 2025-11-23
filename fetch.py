@@ -13,7 +13,6 @@ from notify import Notify
 CONFIG_PATH = os.getenv("FETCH_CONFIG_PATH")
 FB_PAGE_ACCESS_TOKEN = os.getenv("FETCH_FB_PAGE_ACCESS_TOKEN")
 FB_RECIPIENT_ID = os.getenv("FETCH_FB_RECIPIENT_ID")
-JS_RUNTIME_PATH = os.getenv("FETCH_JS_RUNTIME_PATH")
 COOKIES_PATH = os.path.join(CONFIG_PATH[:CONFIG_PATH.rfind("/")], "cookies.txt")
 
 
@@ -51,8 +50,7 @@ class Fetch:
 
     def fetch_video(self, video_id, out_dir, args, i):
         order_i = "%03d_" % i if i > 0 else ""
-        cmd = [self.config["binary"]] + args + ["--js-runtimes", "deno:" + JS_RUNTIME_PATH,
-                                                "--cookies", COOKIES_PATH, "-o", out_dir + order_i + "%(title)s.%(ext)s", "--", video_id]
+        cmd = [self.config["binary"]] + args + ["--cookies", COOKIES_PATH, "-o", out_dir + order_i + "%(title)s.%(ext)s", "--", video_id]
         self.logger.info(" ".join(cmd))
         fetched = False
         try:
