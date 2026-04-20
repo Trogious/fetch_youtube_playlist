@@ -31,11 +31,13 @@ def Create_Service(client_secret_file, pickle_path, api_name, api_version, *scop
             cred.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
-            auth_url, _ = flow.authorization_url()
-            print(f'Please visit this URL to authorize: {auth_url}')
-            code = input('Enter the authorization code: ')
-            flow.fetch_token(code=code)
+            flow.redirect_uri = 'http://localhost:1'
+            auth_url, _ = flow.authorization_url(access_type='offline', prompt='consent')
+            print(f'1. Visit this URL on any device: {auth_url}')
+            print('2. After authorizing, your browser will redirect to a URL that won\'t load.')
+            print('3. Copy the full URL from your browser\'s address bar and paste it below.')
+            redirect_url = input('Paste the redirect URL here: ')
+            flow.fetch_token(authorization_response=redirect_url)
             cred = flow.credentials
 
         with open(pickle_file, 'wb') as token:
