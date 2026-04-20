@@ -31,7 +31,15 @@ def Create_Service(client_secret_file, pickle_path, api_name, api_version, *scop
             cred.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            cred = flow.run_console()
+            try:
+                cred = flow.run_local_server(open_browser=False)
+            except Exception:
+                flow.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+                auth_url, _ = flow.authorization_url()
+                print(f'Please visit this URL to authorize: {auth_url}')
+                code = input('Enter the authorization code: ')
+                flow.fetch_token(code=code)
+                cred = flow.credentials
 
         with open(pickle_file, 'wb') as token:
             pickle.dump(cred, token)
