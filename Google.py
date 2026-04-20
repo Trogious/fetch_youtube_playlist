@@ -31,7 +31,7 @@ def Create_Service(client_secret_file, pickle_path, api_name, api_version, *scop
             cred.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            cred = flow.run_local_server()
+            cred = flow.run_local_server(open_browser=False)
 
         with open(pickle_file, 'wb') as token:
             pickle.dump(cred, token)
