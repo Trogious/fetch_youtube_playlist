@@ -20,8 +20,11 @@ def Create_Service(client_secret_file, pickle_path, api_name, api_version, *scop
     # print(pickle_file)
 
     if os.path.exists(pickle_file):
-        with open(pickle_file, 'rb') as token:
-            cred = pickle.load(token)
+        try:
+            with open(pickle_file, 'rb') as token:
+                cred = pickle.load(token)
+        except (pickle.UnpicklingError, EOFError):
+            cred = None
 
     if not cred or not cred.valid:
         if cred and cred.expired and cred.refresh_token:
