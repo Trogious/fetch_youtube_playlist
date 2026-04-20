@@ -1,5 +1,7 @@
 import pickle
 import os
+import sys
+import shutil
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
@@ -31,6 +33,8 @@ def Create_Service(client_secret_file, pickle_path, api_name, api_version, *scop
         if cred and cred.expired and cred.refresh_token:
             cred.refresh(Request())
         else:
+            if not sys.stdin.isatty():
+                raise RuntimeError('No valid credentials and not running in an interactive shell')
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
             flow.redirect_uri = 'http://localhost:1'
             auth_url, _ = flow.authorization_url(access_type='offline', prompt='consent')
@@ -41,8 +45,9 @@ def Create_Service(client_secret_file, pickle_path, api_name, api_version, *scop
             flow.fetch_token(authorization_response=redirect_url)
             cred = flow.credentials
 
-        with open(pickle_file, 'wb') as token:
-            pickle.dump(cred, token)
+        if shutil.disk_usage(pickle_path).free >= 100 * 1024 * 1024:
+            with open(pickle_file, 'wb') as token:
+                pickle.dump(cred, token)
 
     try:
         service = build(API_SERVICE_NAME, API_VERSION, credentials=cred)
