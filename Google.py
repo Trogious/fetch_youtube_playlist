@@ -1,5 +1,6 @@
 import pickle
 import os
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
